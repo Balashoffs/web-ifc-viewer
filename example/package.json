@@ -20,7 +20,7 @@
     "@rollup/plugin-node-resolve": "^13.0.0",
     "@types/three": "^0.134.0",
     "rollup": "^2.47.0",
-    "serve": "^11.3.2"
+    "serve": "^14.2.0"
   },
   "dependencies": {
     "dxf-writer": "^1.15.1",

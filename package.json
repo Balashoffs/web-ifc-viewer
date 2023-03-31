@@ -29,5 +29,8 @@
   "workspaces": [
     "viewer",
     "example"
-  ]
+  ],
+  "dependencies": {
+    "yarn": "^1.22.19"
+  }
 }

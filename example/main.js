@@ -120,6 +120,10 @@ let model;
 
 const loadIfc = async (event) => {
 
+  if(model){
+    viewer.IFC.removeIfcModel(model.modelID);
+  }
+
   // tests with glTF
   // const file = event.target.files[0];
   // const url = URL.createObjectURL(file);
@@ -204,7 +208,10 @@ window.ondblclick = async () => {
     viewer.clipper.createPlane();
   } else {
     const result = await viewer.IFC.selector.highlightIfcItem(true);
-    if (!result) return;
+    if (!result){
+      viewer.IFC.selector.unHighlightIfcItems();
+      return;
+    } 
     const { modelID, id } = result;
     const props = await viewer.IFC.getProperties(modelID, id, true, false);
     console.log(props);
