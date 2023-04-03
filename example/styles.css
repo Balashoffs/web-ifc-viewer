@@ -45,12 +45,18 @@ html, body {
     background-color: #2a2d33;
 }
 
+#side-menu-left {
+    width: 40px;
+}
+
 .side-menu {
     z-index: 1;
     position: fixed;
     background-color: #36393F;
     height: 100vh;
 }
+
+
 
 .side-sub-menu {
     width: 100%;
@@ -80,13 +86,13 @@ html, body {
     overflow: hidden;
 }
 
-#side-menu-left {
-    width: 40px;
-}
 
-#side-menu-right {
+
+#ifc-property-menu-root {
     right: 0;
     width: 300px;
+    margin-right: 10px;
+    margin-top: 50px;
 }
 
 .loading-overlay {
@@ -121,3 +127,91 @@ html, body {
 .floating-top label {
     margin-right: 0.5em;
 }
+
+.ifc-property-menu {
+    border: 1px solid gray;
+    width: 20rem;
+    position: absolute;
+    background-color: white;
+}
+
+.ifc-property-item {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    padding: 0.5rem;
+    border-bottom: solid 1px gray;
+}
+
+.ifc-property-value {
+    width: 100%;
+    text-align: right;
+}
+
+.layout {
+    width: 100%;
+  
+    display: flex;
+    gap: 16px;
+  
+    justify-content: center;
+  }
+
+
+/*Tree view: https://www.w3schools.com/howto/howto_js_treeview.asp*/
+
+.ifc-tree-menu {
+    position: relative;
+    overflow-y: scroll;
+    background-color: white;
+    height: 100vh;
+}
+
+li ul {
+    user-select: none;
+    cursor: pointer;
+}
+
+/* Remove default bullets */
+ul, #myUL {
+    list-style-type: none;
+}
+
+/* Remove margins and padding from the parent ul */
+#myUL {
+    margin: 0.5rem;
+    padding: 0;
+}
+
+/* Style the caret/arrow */
+.caret {
+    cursor: pointer;
+    user-select: none; /* Prevent text selection */
+}
+
+/* Create the caret/arrow with a unicode, and style it */
+.caret::before {
+    content: "\25B6";
+    color: black;
+    display: inline-block;
+    margin-right: 6px;
+}
+
+/* Rotate the caret/arrow icon when clicked on (using JavaScript) */
+.caret-down::before {
+    transform: rotate(90deg);
+}
+
+/* Hide the nested list */
+.nested {
+    display: none;
+}
+
+/* Show the nested list when the user clicks on the caret/arrow (with JavaScript) */
+.active {
+    display: block;
+    margin-left: 10px;
+}
+  
+.ifc-tree-menu { flex-grow: 3; }
+.viewer-container { flex-grow: 3; }

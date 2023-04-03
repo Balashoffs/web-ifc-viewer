@@ -1,5 +1,6 @@
 import {nodeResolve} from '@rollup/plugin-node-resolve';
 import commonjs from '@rollup/plugin-commonjs';
+import json from "@rollup/plugin-json";
 
 export default {
   input: 'main.js',
@@ -8,5 +9,5 @@ export default {
     format: 'iife',
     inlineDynamicImports: true, //Necessary for jspdf
   },
-  plugins: [ nodeResolve(), commonjs() ]
+  plugins: [ nodeResolve(), commonjs(),json() ]
 };

@@ -13,6 +13,8 @@ import {
 } from 'three';
 import { ClippingEdges } from 'web-ifc-viewer/dist/components/display/clipping-planes/clipping-edges';
 import Stats from 'stats.js/src/Stats';
+import { Points } from 'three';
+import { NavCube } from "./NavCube/NavCube";
 
 const container = document.getElementById('viewer-container');
 const viewer = new IfcViewerAPI({ container, backgroundColor: new Color(255, 255, 255) });
@@ -33,66 +35,66 @@ viewer.context.ifcCamera.cameraControls
 const manager = viewer.IFC.loader.ifcManager;
 
 async function getAllWallMeshes() {
- const wallsIDs = manager.getAllItemsOfType(0, IFCWALL, false);
- const meshes = [];
+  const wallsIDs = manager.getAllItemsOfType(0, IFCWALL, false);
+  const meshes = [];
   const customID = 'temp-gltf-subset';
 
   for(const wallID of wallsIDs) {
-   const coordinates = [];
-   const expressIDs = [];
-   const newIndices = [];
+    const coordinates = [];
+    const expressIDs = [];
+    const newIndices = [];
 
-   const alreadySaved = new Map();
+    const alreadySaved = new Map();
 
-   const subset = viewer.IFC.loader.ifcManager.createSubset({
-     ids: [wallID],
-     modelID,
-     removePrevious: true,
-     customID
-   });
+    const subset = viewer.IFC.loader.ifcManager.createSubset({
+      ids: [wallID],
+      modelID,
+      removePrevious: true,
+      customID
+    });
 
-   const positionAttr = subset.geometry.attributes.position;
-   const expressIDAttr = subset.geometry.attributes.expressID;
+    const positionAttr = subset.geometry.attributes.position;
+    const expressIDAttr = subset.geometry.attributes.expressID;
 
-   const newGroups = subset.geometry.groups.filter((group) => group.count !== 0);
-   const newMaterials = [];
-   const prevMaterials = subset.material;
-   let newMaterialIndex = 0;
-   newGroups.forEach((group) => {
-     newMaterials.push(prevMaterials[group.materialIndex]);
-     group.materialIndex = newMaterialIndex++;
-   });
+    const newGroups = subset.geometry.groups.filter((group) => group.count !== 0);
+    const newMaterials = [];
+    const prevMaterials = subset.material;
+    let newMaterialIndex = 0;
+    newGroups.forEach((group) => {
+      newMaterials.push(prevMaterials[group.materialIndex]);
+      group.materialIndex = newMaterialIndex++;
+    });
 
-   let newIndex = 0;
-   for (let i = 0; i < subset.geometry.index.count; i++) {
-     const index = subset.geometry.index.array[i];
+    let newIndex = 0;
+    for (let i = 0; i < subset.geometry.index.count; i++) {
+      const index = subset.geometry.index.array[i];
 
-     if (!alreadySaved.has(index)) {
-       coordinates.push(positionAttr.array[3 * index]);
-       coordinates.push(positionAttr.array[3 * index + 1]);
-       coordinates.push(positionAttr.array[3 * index + 2]);
+      if (!alreadySaved.has(index)) {
+        coordinates.push(positionAttr.array[3 * index]);
+        coordinates.push(positionAttr.array[3 * index + 1]);
+        coordinates.push(positionAttr.array[3 * index + 2]);
 
-       expressIDs.push(expressIDAttr.getX(index));
-       alreadySaved.set(index, newIndex++);
-     }
+        expressIDs.push(expressIDAttr.getX(index));
+        alreadySaved.set(index, newIndex++);
+      }
 
-     const saved = alreadySaved.get(index);
-     newIndices.push(saved);
-   }
+      const saved = alreadySaved.get(index);
+      newIndices.push(saved);
+    }
 
-   const geometryToExport = new BufferGeometry();
-   const newVerticesAttr = new BufferAttribute(Float32Array.from(coordinates), 3);
-   const newExpressIDAttr = new BufferAttribute(Uint32Array.from(expressIDs), 1);
+    const geometryToExport = new BufferGeometry();
+    const newVerticesAttr = new BufferAttribute(Float32Array.from(coordinates), 3);
+    const newExpressIDAttr = new BufferAttribute(Uint32Array.from(expressIDs), 1);
 
-   geometryToExport.setAttribute('position', newVerticesAttr);
-   geometryToExport.setAttribute('expressID', newExpressIDAttr);
-   geometryToExport.setIndex(newIndices);
-   geometryToExport.groups = newGroups;
-   geometryToExport.computeVertexNormals();
+    geometryToExport.setAttribute('position', newVerticesAttr);
+    geometryToExport.setAttribute('expressID', newExpressIDAttr);
+    geometryToExport.setIndex(newIndices);
+    geometryToExport.groups = newGroups;
+    geometryToExport.computeVertexNormals();
 
-   const mesh = new Mesh(geometryToExport, newMaterials);
-   meshes.push(mesh);
- }
+    const mesh = new Mesh(geometryToExport, newMaterials);
+    meshes.push(mesh);
+  }
 
   viewer.IFC.loader.ifcManager.removeSubset(modelID, undefined, customID);
   return meshes;
@@ -120,10 +122,6 @@ let model;
 
 const loadIfc = async (event) => {
 
-  if(model){
-    viewer.IFC.removeIfcModel(model.modelID);
-  }
-
   // tests with glTF
   // const file = event.target.files[0];
   // const url = URL.createObjectURL(file);
@@ -144,7 +142,7 @@ const loadIfc = async (event) => {
   //
   // link.remove();
   const selectedFile = event.target.files[0];
-  if(!selectedFile) return;
+  if (!selectedFile) return;
 
   const overlay = document.getElementById('loading-overlay');
   const progressText = document.getElementById('loading-progress');
@@ -165,7 +163,7 @@ const loadIfc = async (event) => {
   model = await viewer.IFC.loadIfc(selectedFile, false);
   // model.material.forEach(mat => mat.side = 2);
 
-  if(first) first = false
+  if (first) first = false
   else {
     ClippingEdges.forceStyleUpdate = true;
   }
@@ -177,7 +175,94 @@ const loadIfc = async (event) => {
 
   overlay.classList.add('hidden');
 
+  viewer.container = container;
+  const navCube = new NavCube(viewer);
+  console.log(navCube.boxCube);
+  navCube.onPick(model);
+
+  const ifcProject = await viewer.IFC.getSpatialStructure(model.modelID);
+  createTreeMenu(ifcProject);
+
 };
+
+const toggler = document.getElementsByClassName("caret");
+for (let i = 0; i < toggler.length; i++) {
+    toggler[i].onclick = () => {
+        toggler[i].parentElement.querySelector(".nested").classList.toggle("active");
+        toggler[i].classList.toggle("caret-down");
+    }
+}
+
+function createTreeMenu(ifcProject) {
+  const root = document.getElementById("tree-root");
+  removeAllChildren(root);
+  const ifcProjectNode = createNestedChild(root, ifcProject);
+  ifcProject.children.forEach(child => {
+      constructTreeMenuNode(ifcProjectNode, child);
+  })
+}
+
+function nodeToString(node) {
+  return `${node.type} - ${node.expressID}`
+}
+
+function constructTreeMenuNode(parent, node) {
+  const children = node.children;
+  if (children.length === 0) {
+      createSimpleChild(parent, node);
+      return;
+  }
+  const nodeElement = createNestedChild(parent, node);
+  children.forEach(child => {
+      constructTreeMenuNode(nodeElement, child);
+  })
+}
+
+function createNestedChild(parent, node) {
+  const content = nodeToString(node);
+  const root = document.createElement('li');
+  createTitle(root, content);
+  const childrenContainer = document.createElement('ul');
+  childrenContainer.classList.add("nested");
+  root.appendChild(childrenContainer);
+  parent.appendChild(root);
+  return childrenContainer;
+}
+
+function createTitle(parent, content) {
+  const title = document.createElement("span");
+  title.classList.add("caret");
+  title.onclick = () => {
+      title.parentElement.querySelector(".nested").classList.toggle("active");
+      title.classList.toggle("caret-down");
+  }
+  title.textContent = content;
+  parent.appendChild(title);
+}
+
+function createSimpleChild(parent, node) {
+  const content = nodeToString(node);
+  const childNode = document.createElement('li');
+  childNode.classList.add('leaf-node');
+  childNode.textContent = content;
+  parent.appendChild(childNode);
+
+  childNode.onmouseenter = () => {
+      viewer.IFC.selector.prepickIfcItemsByID(0, [node.expressID]);
+  }
+
+  childNode.onclick = async () => {
+      viewer.IFC.selector.pickIfcItemsByID(0, [node.expressID]);
+      const props = await viewer.IFC.getProperties(model.modelID, node.expressID, true, false);
+      createPropertiesMenu(props);
+  }
+}
+
+function removeAllChildren(element) {
+  while (element.firstChild) {
+      element.removeChild(element.firstChild);
+  }
+}
 
 const inputElement = document.createElement('input');
 inputElement.setAttribute('type', 'file');
@@ -197,8 +282,56 @@ const handleKeyDown = async (event) => {
   }
   if (event.code === 'KeyD') {
     viewer.IFC.removeIfcModel(0);
+    console.log(model);
   }
 };
+
+const propsGUI = document.getElementById("ifc-property-menu-root");
+
+function createPropertiesMenu(properties) {
+    console.log(properties);
+
+    removeAllChildren(propsGUI);
+
+    const psets = properties.psets;
+    const mats = properties.mats;
+    const type = properties.type;
+
+    delete properties.psets;
+    delete properties.mats;
+    delete properties.type;
+
+
+    for (let key in properties) {
+        createPropertyEntry(key, properties[key]);
+    }
+
+}
+
+function createPropertyEntry(key, value) {
+    const propContainer = document.createElement("div");
+    propContainer.classList.add("ifc-property-item");
+
+    if(value === null || value === undefined) value = "undefined";
+    else if(value.value) value = value.value;
+
+    const keyElement = document.createElement("div");
+    keyElement.textContent = key;
+    propContainer.appendChild(keyElement);
+
+    const valueElement = document.createElement("div");
+    valueElement.classList.add("ifc-property-value");
+    valueElement.textContent = value;
+    propContainer.appendChild(valueElement);
+
+    propsGUI.appendChild(propContainer);
+}
+
+// function removeAllChildren(element) {
+//     while (element.firstChild) {
+//         element.removeChild(element.firstChild);
+//     }
+// }
 
 window.onmousemove = () => viewer.IFC.selector.prePickIfcItem();
 window.onkeydown = handleKeyDown;
@@ -206,17 +339,17 @@ window.ondblclick = async () => {
 
   if (viewer.clipper.active) {
     viewer.clipper.createPlane();
-  } else {
+  } 
+  else {
     const result = await viewer.IFC.selector.highlightIfcItem(true);
-    if (!result){
-      viewer.IFC.selector.unHighlightIfcItems();
-      return;
-    } 
+    if (!result) return;
     const { modelID, id } = result;
     const props = await viewer.IFC.getProperties(modelID, id, true, false);
-    console.log(props);
+    createPropertiesMenu(props);
   }
 };
+
+
 
 //Setup UI
 const loadButton = createSideMenuButton('./resources/folder-icon.svg');
@@ -231,8 +364,18 @@ sectionButton.addEventListener('click', () => {
   viewer.clipper.toggle();
 });
 
-const dropBoxButton = createSideMenuButton('./resources/dropbox-icon.svg');
+const orthographicViewButton = createSideMenuButton('./resources/dropbox-icon.svg');
+orthographicViewButton.addEventListener('click', () => {
+  orthographicViewButton.blur();
+  // viewer.context.ifcCamera.cameraControls.position
+  viewer.context.ifcCamera.toggleProjection();
+
+}); 
+
+const dropBoxButton = createSideMenuButton('./resources/2d-icon.png');
 dropBoxButton.addEventListener('click', () => {
   dropBoxButton.blur();
-  viewer.dropbox.loadDropboxIfc();
-});
+  // viewer.context.ifcCamera.cameraControls.position
+  viewer.context.ifcCamera.toggleProjection();
+
+}); 
