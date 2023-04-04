@@ -1,4 +1,4 @@
-import fontJSON from "./font/droid_sans_bold.typeface.json";
+import fontJSON from "./font/Droid_Sans_Mono_Regular.json";
 import { BoxGeometry, EdgesGeometry, LineSegments, Mesh, RingGeometry, Vector3 } from "three";
 import { FontLoader } from "three/examples/jsm/loaders/FontLoader.js";
 import { TextGeometry } from "three/examples/jsm/geometries/TextGeometry.js";
@@ -93,8 +93,8 @@ function initText3D(scene, name, x1, y1, z1) {
 	const font = loader.parse(fontJSON);
 	const parameters = {
 		font: font,
-		size: 36,
-		height: 2,
+		size: 24,
+		height: 4,
 	};
 	if (name === "bottom") {
 		var textCube = new TextGeometry("bot", parameters);
@@ -113,8 +113,8 @@ function initTextRing(scene, name, x1, y1, z1) {
 	const font = loader.parse(fontJSON);
 	const parameters = {
 		font: font,
-		size: 50,
-		height: 2,
+		size: 24,
+		height: 4,
 	};
 	var textCube = new TextGeometry(name, parameters);
 	rotateRing(name, textCube);
